@@ -1,27 +1,28 @@
 <script setup lang="ts">
-import './style.css'
 import { ref } from 'vue'
-
-import CurrencyList from './components/CurrencyList.vue'
-import MarketTable from './components/MarketTable.vue'
-import StatTiles from './components/StatTiles.vue'
 import Toolbar from './components/Toolbar.vue'
+import StatTiles from './components/StatTiles.vue'
+import MarketTable from './components/MarketTable.vue'
+import CurrencyList from './components/CurrencyList.vue'
+import './style.css'
 
 type TabId = 'market' | 'currencies'
-const tabs: { id: TabId; label: string }[] = [
-  { id: 'market', label: 'Market' },
+const tabs: ReadonlyArray<{ id: TabId; label: string }> = [
+  { id: 'market',     label: 'Market' },
   { id: 'currencies', label: 'Currencies' },
-]
+] as const
+
 const active = ref<TabId>('market')
 
 function onTabsKeydown(e: KeyboardEvent) {
-  const idx = tabs.findIndex((t) => t.id === active.value)
+  if (!tabs.length) return
+  const idx = Math.max(0, tabs.findIndex(t => t.id === active.value))
   if (e.key === 'ArrowRight') {
+    active.value = (tabs[(idx + 1) % tabs.length]?.id ?? 'market') as TabId
     e.preventDefault()
-    active.value = tabs[(idx + 1) % tabs.length]?.id
   } else if (e.key === 'ArrowLeft') {
+    active.value = (tabs[(idx - 1 + tabs.length) % tabs.length]?.id ?? 'market') as TabId
     e.preventDefault()
-    active.value = tabs[(idx - 1 + tabs.length) % tabs.length]?.id
   }
 }
 </script>
@@ -37,14 +38,10 @@ function onTabsKeydown(e: KeyboardEvent) {
 
     <div class="tabs card" role="tablist" aria-label="Data views" @keydown="onTabsKeydown">
       <button
-        v-for="t in tabs"
-        :id="`tab-${t.id}`"
-        :key="t.id"
-        class="tab"
-        :class="{ 'is-active': active === t.id }"
-        role="tab"
-        :aria-selected="active === t.id"
-        :tabindex="active === t.id ? 0 : -1"
+        v-for="t in tabs" :key="t.id"
+        class="tab" :class="{ 'is-active': active === t.id }"
+        role="tab" :id="`tab-${t.id}`"
+        :aria-selected="active === t.id" :tabindex="active === t.id ? 0 : -1"
         :aria-controls="`panel-${t.id}`"
         @click="active = t.id"
       >
@@ -52,21 +49,11 @@ function onTabsKeydown(e: KeyboardEvent) {
       </button>
     </div>
 
-    <section
-      v-show="active === 'market'"
-      :id="`panel-market`"
-      role="tabpanel"
-      aria-labelledby="tab-market"
-    >
+    <section role="tabpanel" id="panel-market" aria-labelledby="tab-market" v-show="active === 'market'">
       <MarketTable />
     </section>
 
-    <section
-      v-show="active === 'currencies'"
-      :id="`panel-currencies`"
-      role="tabpanel"
-      aria-labelledby="tab-currencies"
-    >
+    <section role="tabpanel" id="panel-currencies" aria-labelledby="tab-currencies" v-show="active === 'currencies'">
       <CurrencyList />
     </section>
 

@@ -98,6 +98,32 @@ label {
   background: #111827;
 }
 
+.sparkline {
+  display: block;
+  max-width: 100%;
+}
+
+.bg {
+  fill: transparent;
+}
+
+.line {
+  fill: none;
+  stroke-width: 1.5;
+}
+
+.line.up {
+  stroke: var(--up, #2ecc71);
+}
+
+.line.down {
+  stroke: var(--down, #e74c3c);
+}
+
+.line.flat {
+  stroke: var(--muted, #7f8c8d);
+}
+
 .badge {
   font-size: 12px;
   padding: 2px 8px;

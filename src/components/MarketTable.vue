@@ -29,7 +29,7 @@ function fmtPct(n?: number) {
 </script>
 
 <template>
-  <div class="card" role="region" aria-live="polite" aria-busy="loading">
+  <div class="card" role="region" aria-live="polite">
     <div class="caption">
       <h2>Market</h2>
       <div v-if="loading" class="muted">Updating…</div>

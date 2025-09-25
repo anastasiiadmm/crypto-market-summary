@@ -62,6 +62,7 @@ I use **ESLint v9 (Flat Config)** with type-aware rules and Prettier:
 - Prettier config in `.prettierrc.json`.
 
 Scripts:
+
 ```bash
 npm run lint         # strict lint (no warnings allowed)
 npm run lint:fix     # fixable issues

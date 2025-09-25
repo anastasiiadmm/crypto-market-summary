@@ -64,7 +64,7 @@ function mapMarketRow(raw: MarketRowRaw): MarketItem {
   const last = toNum(raw.price?.last)
   const hist = (raw.priceHistory ?? []).map(toNum).filter(Number.isFinite)
   const history = hist.slice(-40)
-  const base = hist.length ? hist[0] : last
+  const base = history.length ? history[0]! : last
   const changePct = Number.isFinite(base) && base !== 0 ? ((last - base) / base) * 100 : 0
   const hi = hist.length ? Math.max(...hist, last) : last
   const lo = hist.length ? Math.min(...hist, last) : last
@@ -104,16 +104,12 @@ export async function fetchMarket(quote: string): Promise<FetchMarketResult> {
 
   const rows = await safeFetch(url.toString(), MarketRowRawArraySchema)
 
-  const secondaries = new Set(rows.map((r) => r.pair.secondary.toUpperCase()))
-  const list = Array.from(secondaries)
+  const secondaries = new Set(rows.map(r => r.pair.secondary.toUpperCase()))
 
-  let effective: string = want || 'USD'
+  let effective = want
   if (!secondaries.has(want)) {
-    if (list.length === 1) {
-      effective = list[0]
-    } else if (list.length > 1) {
-      effective = secondaries.has('USD') ? 'USD' : (list[0] ?? effective)
-    }
+    const first = Array.from(secondaries)[0]
+    effective = secondaries.has('USD') ? 'USD' : (first ?? 'USD')
   }
 
   const items = rows.filter((r) => r.pair.secondary.toUpperCase() === effective).map(mapMarketRow)
