@@ -14,11 +14,9 @@
     "prepare": "husky"
   },
   "lint-staged": {
-    "*.{ts,tsx,js}": "eslint --fix",
-    "*.{css,scss}": "stylelint --fix"
+    "*.{ts,tsx,js,vue}": "eslint --fix"
   },
   "dependencies": {
-    "date-fns": "^4.1.0",
     "pinia": "^3.0.3",
     "vue": "^3.5.21",
     "zod": "^4.1.11"
