@@ -39,13 +39,11 @@ export type Currency = z.infer<typeof CurrencySchema>
 
 export const MarketItemSchema = z.object({
   symbol: z.string(),
-  name: z.string().optional(),
   price: z.number(),
   change24h: z.number().optional(),
   high24h: z.number().optional(),
   low24h: z.number().optional(),
   volume24h: z.number().optional(),
-  marketCap: z.number().optional(),
   history: z.array(z.number()).optional(),
 })
 export type MarketItem = z.infer<typeof MarketItemSchema>
@@ -56,8 +54,10 @@ export interface FetchCurrenciesResult {
 }
 
 export interface FetchMarketResult {
-  quote?: string
-  items: MarketItem[]
-  requested?: string
-  detected?: string
+  quote: string;
+  items: MarketItem[];
+  detected?: string;
+  available?: string[];
 }
+
+export type CurrencySortKey = 'code' | 'ticker' | 'type' | 'sort_order' | 'name'

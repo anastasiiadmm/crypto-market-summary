@@ -1,126 +1,82 @@
 import { defineStore } from 'pinia'
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
-
-import { fetchCurrencies, fetchMarket } from '../services/api'
-import type { MarketItem, Currency } from '../types'
-
-export type SortKey = 'symbol' | 'price' | 'change24h' | 'volume24h' | 'marketCap'
-export type SortDir = 'asc' | 'desc'
+import type { MarketItem } from '@/types.ts'
+import type { SortDir, SortKey } from '@/types/ui.ts'
+import { fetchMarket } from '@/api/market.ts'
 
 export const useMarketStore = defineStore('market', () => {
-  const currencies = ref<Currency[]>([])
-  const quote = ref<string>('USD')
-  const items = ref<MarketItem[]>([])
-  const loading = ref<boolean>(false)
-  const error = ref<string | null>(null)
+  const quote = ref<string>('AUD')
 
-  const query = ref<string>('')
-  const sortKey = ref<SortKey>('marketCap')
-  const sortDir = ref<SortDir>('desc')
-  const pollMs = ref<number>(10_000)
+  const items = ref<MarketItem[]>([])
+  const loading = ref(false)
+  const error = ref<string | null>(null)
   const notice = ref<string | null>(null)
+
+  const query = ref('')
+  const sortKey = ref<SortKey>('price')
+  const sortDir = ref<SortDir>('desc')
+  const pollMs = ref(10_000)
 
   let timer: number | null = null
 
-  async function init() {
-    try {
-      loading.value = true
-      const { quotes } = await fetchCurrencies()
-      currencies.value = quotes
-      if (!quotes.find((c) => c.code === 'USD') && quotes[0]) {
-        quote.value = quotes[0].code
-      }
-      await load()
-      start()
-    } catch (e: any) {
-      error.value = e.message ?? String(e)
-    } finally {
-      loading.value = false
-    }
-  }
-
-  async function load() {
+  async function load(): Promise<void> {
     try {
       loading.value = true
       error.value = null
-      const { items: data, requested, detected } = await fetchMarket(quote.value)
-      items.value = data
-
-      if (requested && detected && requested !== detected) {
-        notice.value = `Для ${requested} нет данных. Показаны пары в ${detected}.`
-      } else {
-        notice.value = null
-      }
-    } catch (e: any) {
-      error.value = e.message ?? String(e)
+      const res = await fetchMarket(quote.value)
+      items.value = res.items
+    } catch (e) {
+      error.value = e instanceof Error ? e.message : String(e)
     } finally {
       loading.value = false
     }
   }
 
-  function start() {
+  function start(): void {
     stop()
-    timer = window.setInterval(() => {
-      void load()
-    }, pollMs.value)
+    timer = window.setInterval(() => { void load() }, pollMs.value)
   }
-  function stop() {
-    if (timer) {
-      clearInterval(timer)
-      timer = null
+  function stop(): void {
+    if (timer !== null) { clearInterval(timer); timer = null }
+  }
+
+  function getSortValue(item: MarketItem, key: SortKey): number | string {
+    switch (key) {
+      case 'symbol': return item.symbol
+      case 'price': return item.price ?? 0
+      case 'change24h': return item.change24h ?? 0
+      case 'volume24h': return item.volume24h ?? 0
+    }
+  }
+  function compareByKey(key: SortKey, dir: SortDir) {
+    const mul = dir === 'asc' ? 1 : -1
+    return (a: MarketItem, b: MarketItem): number => {
+      const va = getSortValue(a, key)
+      const vb = getSortValue(b, key)
+      return (typeof va === 'string' && typeof vb === 'string')
+        ? va.localeCompare(vb) * mul
+        : (Number(va) - Number(vb)) * mul
     }
   }
 
-  const filtered = computed(() => {
+  const filtered = computed<MarketItem[]>(() => {
     const q = query.value.trim().toLowerCase()
-    let list = items.value
-    if (q) list = list.filter((i) => (i.symbol + ' ' + (i.name ?? '')).toLowerCase().includes(q))
-
-    const dir = sortDir.value === 'asc' ? 1 : -1
-    const key = sortKey.value
-    return [...list].sort((a, b) => {
-      const va = (a as any)[key] ?? 0
-      const vb = (b as any)[key] ?? 0
-      if (typeof va === 'string' && typeof vb === 'string') return va.localeCompare(vb) * dir
-      return (va - vb) * dir
-    })
+    const base = q
+      ? items.value.filter((i) => (i.symbol).toLowerCase().includes(q))
+      : items.value
+    return [...base].sort(compareByKey(sortKey.value, sortDir.value))
   })
 
-  const stats = computed(() => {
-    const totalCap = items.value.reduce((s, x) => s + (x.marketCap ?? 0), 0)
-    const avgChange = items.value.length
-      ? items.value.reduce((s, x) => s + (x.change24h ?? 0), 0) / items.value.length
-      : 0
-    const actives = items.value.length
-    return { totalCap, avgChange, actives }
-  })
+  watch(pollMs, start)
+  watch(quote, () => { void load() })
 
-  watch(pollMs, () => start())
-  watch(quote, () => {
-    void load()
-  })
-
-  onMounted(() => {
-    void init()
-  })
+  onMounted(async () => { await load(); start() })
   onUnmounted(stop)
 
   return {
-    currencies,
-    quote,
-    items,
-    loading,
-    error,
-    query,
-    sortKey,
-    sortDir,
-    pollMs,
-    init,
-    load,
-    start,
-    stop,
+    quote, items, loading, error, notice,
+    query, sortKey, sortDir, pollMs,
     filtered,
-    stats,
-    notice,
+    load,
   }
 })

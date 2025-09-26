@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { SPARK_COPY, SPARK_DEFAULTS, SPARK_VIEWBOX } from '@/constants/sparkline.ts'
+import { buildPath, hasData, isTrendUp } from '@/utils/sparkline.ts'
 
 interface Props {
   data?: number[]
@@ -10,56 +12,46 @@ interface Props {
 }
 const props = defineProps<Props>()
 
-const W  = computed<number>(() => props.width ?? 100)
-const H  = computed<number>(() => props.height ?? 20)
+const W = computed(() => props.width ?? SPARK_DEFAULTS.width)
+const H = computed(() => props.height ?? SPARK_DEFAULTS.height)
 
-const hasData = computed(() => (props.data?.length ?? 0) >= 2)
+const _hasData = computed(() => hasData(props.data))
+const up = computed(() => isTrendUp(props.data))
 
-const isUp = computed(() => {
-  const d = props.data ?? []
-  if (d.length >= 2) {
-    const first = d[0]!
-    const last  = d[d.length - 1]!
-    return last >= first
-  }
-  return false
-})
+const pathD = computed(() => buildPath(props.data ?? [], W.value, H.value))
 
-const pathD = computed(() => {
-  const d = props.data ?? []
-  const n = d.length
-  if (n < 2) return ''
-
-  let min = Infinity, max = -Infinity
-  for (const v of d) { if (v < min) min = v; if (v > max) max = v }
-  const range = max - min || 1
-
-  const stepX = n > 1 ? W.value / (n - 1) : W.value
-  const toY = (v: number) => {
-    const t = (v - min) / range
-    return H.value - t * H.value
-  }
-
-  let dstr = `M 0 ${toY(d[0]!).toFixed(2)}`
-  for (let i = 1; i < n; i++) {
-    const x = (i * stepX).toFixed(2)
-    const y = toY(d[i]!).toFixed(2)
-    dstr += ` L ${x} ${y}`
-  }
-  return dstr
+const aria = computed(() => {
+  const label = props.ariaLabel ?? SPARK_COPY.title
+  const count = props.data?.length ?? 0
+  return SPARK_COPY.ariaWithCount(label, count)
 })
 </script>
 
 <template>
   <svg
-    :width="W" :height="H" viewBox="0 0 100 20"
-    class="sparkline" role="img"
-    :aria-label="`${ariaLabel ?? 'Price trend chart'} with ${data?.length ?? 0} data points`"
+    :width="W"
+    :height="H"
+    :viewBox="SPARK_VIEWBOX"
+    class="sparkline"
+    role="img"
+    :aria-label="aria"
   >
-    <title>{{ ariaLabel ?? 'Price trend chart' }}</title>
-    <rect x="0" y="0" width="100" height="20" class="bg" />
-    <path v-if="hasData" :d="pathD" :class="['line', isUp ? 'up' : 'down']" vector-effect="non-scaling-stroke" />
-    <line v-else x1="0" y1="10" x2="100" y2="10" class="line flat" vector-effect="non-scaling-stroke" />
+    <title>{{ props.ariaLabel ?? SPARK_COPY.title }}</title>
+    <rect x="0" y="0" :width="SPARK_DEFAULTS.width" :height="SPARK_DEFAULTS.height" class="bg" />
+    <path
+      v-if="_hasData"
+      :d="pathD"
+      :class="['line', up ? 'up' : 'down']"
+      vector-effect="non-scaling-stroke"
+      :style="{ strokeWidth: (props.strokeWidth ?? SPARK_DEFAULTS.strokeWidth) + 'px' }"
+    />
+    <line
+      v-else
+      x1="0" :y1="SPARK_DEFAULTS.height / 2"
+      :x2="SPARK_DEFAULTS.width" :y2="SPARK_DEFAULTS.height / 2"
+      class="line flat"
+      vector-effect="non-scaling-stroke"
+      :style="{ strokeWidth: (props.strokeWidth ?? SPARK_DEFAULTS.strokeWidth) + 'px' }"
+    />
   </svg>
 </template>
-

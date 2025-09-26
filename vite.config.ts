@@ -1,5 +1,6 @@
-import vue from '@vitejs/plugin-vue'
 import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
+import { fileURLToPath, URL } from 'node:url'
 
 export default defineConfig({
   plugins: [vue()],
@@ -9,8 +10,13 @@ export default defineConfig({
         target: 'https://user26614.requestly.tech',
         changeOrigin: true,
         secure: true,
-        rewrite: (path) => path.replace(/^\/api/, '/test/api'),
+        rewrite: (p) => p.replace(/^\/api/, '/test/api'),
       },
+    },
+  },
+  resolve: {
+    alias: {
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
 })

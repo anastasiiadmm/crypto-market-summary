@@ -46,6 +46,7 @@ body {
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: 14px;
+  margin-bottom: 16px;
 }
 
 .row {
@@ -54,10 +55,14 @@ body {
   flex-wrap: wrap;
 }
 
-.grid-3 {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
+.toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.page-title {
+  margin: 0 0 8px 0;
 }
 
 input,
@@ -253,4 +258,96 @@ footer {
   color: var(--muted);
   font-size: 12px;
   text-align: center;
+}
+
+.tabs {
+  display: inline-flex;
+  gap: 6px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--card);
+  margin-bottom: 16px;
+}
+
+.tabs button {
+  appearance: none;
+  border: 1px solid transparent;
+  background: transparent;
+  padding: 8px 16px;
+  border-radius: 10px;
+  font: inherit;
+  cursor: pointer;
+  color: var(--muted);
+  transition: all 0.2s ease;
+}
+
+.tabs button:hover {
+  color: var(--text);
+  border-color: var(--border);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.tabs button.active {
+  color: var(--text);
+  font-weight: 600;
+  background: var(--bg);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent) inset, 0 2px 6px rgba(0,0,0,0.3);
+}
+
+.segmented {
+  display: inline-flex;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 4px;
+  gap: 4px;
+}
+
+.segmented-btn {
+  appearance: none;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 160ms ease, color 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+  white-space: nowrap;
+}
+
+.segmented-btn:hover {
+  color: var(--text);
+  background: rgba(255,255,255,0.04);
+  border-color: var(--border);
+}
+
+.segmented-btn[aria-pressed="true"] {
+  color: var(--text);
+  font-weight: 600;
+  background: var(--bg);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent) inset, 0 2px 6px rgba(0,0,0,0.25);
+}
+
+.segmented-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 60%, transparent),
+  0 0 0 1px var(--accent) inset;
+}
+
+.segmented-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 560px) {
+  .segmented { padding: 3px; gap: 3px; }
+  .segmented-btn { padding: 8px 10px; font-size: 0.95rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .segmented-btn { transition: none; }
 }
